@@ -8,16 +8,16 @@ var items = {};
 // Public API - Fix these CRUD functions ///////////////////////////////////////
 
 exports.create = (text, callback) => {
-  const filePath = path.join(exports.dataDir, `${id}.txt`)
   counter.getNextUniqueId((err, id) => {
     if (err) {
       callback(err)
     } else {
+      const filePath = path.join(exports.dataDir, `${id}.txt`)
       fs.writeFile(filePath, text, (err) => {
         if (err) {
           callback(err);
         } else {
-          callback(null, { id, text} )
+          callback(null, { id, text })
         }
       })
     }
@@ -30,19 +30,20 @@ exports.readAll = (callback) => {
     if (err) {
       callback(err);
     } else {
-      let dataArr = [];
-      files.map(filePath => {
-        fs.readFile(filePath, (err, data) => {
+      console.log(files.map((file) => {
+        const filePath = path.join(exports.dataDir, file)
+        fs.readFile(filePath, 'utf8', (err, data) => {
+          // console.log(filePath);
+          // console.log(file);  
           if (err) {
             callback(err);
           } else {
-            dataArr.push(data);
+            return { id: file, text: data.toString() }
           }
         })
-      })
+      }))
     }
   })
-
 
   // var data = _.map(items, (text, id) => {
   //   return { id, text };
@@ -51,33 +52,57 @@ exports.readAll = (callback) => {
 };
 
 exports.readOne = (id, callback) => {
-  var text = items[id];
-  if (!text) {
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    callback(null, { id, text });
-  }
+  const filePath = path.join(exports.dataDir, `${id}.txt`)
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      callback(err)
+    } else {
+      callback(null, { id, text: data.toString() })
+    }
+  })
 };
 
 exports.update = (id, text, callback) => {
-  var item = items[id];
-  if (!item) {
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    items[id] = text;
-    callback(null, { id, text });
-  }
+  const filePath = path.join(exports.dataDir, `${id}.txt`)
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      callback(err)
+    } else {
+      fs.writeFile(filePath, text, (err, data) => {
+        if (err) {
+          callback(err)
+        } else {
+          callback(null, { id, text })
+        }
+      })
+    }
+  })
 };
 
 exports.delete = (id, callback) => {
-  var item = items[id];
-  delete items[id];
-  if (!item) {
-    // report an error if item not found
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    callback();
-  }
+  const filePath = path.join(exports.dataDir, `${id}.txt`)  
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      callback(err);
+    } else {
+      fs.unlink(filePath, (err, data) => {
+        if (err) {
+          callback(err);
+        } else {
+          callback();
+        }
+      })
+    }
+  })
+
+  // var item = items[id];
+  // delete items[id];
+  // if (!item) {
+  //   // report an error if item not found
+  //   callback(new Error(`No item with id: ${id}`));
+  // } else {
+  //   callback();
+  // }
 };
 
 // Config+Initialization code -- DO NOT MODIFY /////////////////////////////////
