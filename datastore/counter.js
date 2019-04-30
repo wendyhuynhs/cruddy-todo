@@ -1,4 +1,5 @@
-const fs = require('fs');
+const Promise = require('bluebird')
+const fs = Promise.promisifyAll(require('fs'));
 const path = require('path');
 const sprintf = require('sprintf-js').sprintf;
 
@@ -14,43 +15,53 @@ const zeroPaddedNumber = (num) => {
   return sprintf('%05d', num);
 };
 
-const readCounter = (callback) => {
-  fs.readFile(exports.counterFile, (err, fileData) => {
-    if (err) {
-      callback(null, 0);
-    } else {
-      callback(null, Number(fileData));
-    }
-  });
+const readCounter = () => {
+  // fs.readFile(exports.counterFile, (err, fileData) => {
+  //   if (err) {
+  //     callback(null, 0);
+  //   } else {
+  //     callback(null, Number(fileData));
+  //   }
+  // });
+  return fs.readFileAsync(exports.counterFile)
+    .then(fileData => Number(fileData))
+    .catch(() => 0)
 };
 
-const writeCounter = (count, callback) => {
+const writeCounter = (count) => {
+  // var counterString = zeroPaddedNumber(count);
+  // fs.writeFile(exports.counterFile, counterString, (err) => {
+  //   if (err) {
+  //     throw ('error writing counter');
+  //   } else {
+  //     callback(null, counterString);
+  //   }
+  // });
   var counterString = zeroPaddedNumber(count);
-  fs.writeFile(exports.counterFile, counterString, (err) => {
-    if (err) {
-      throw ('error writing counter');
-    } else {
-      callback(null, counterString);
-    }
-  });
+  return fs.writeFileAsync(exports.counterFile, counterString)
+    .then(() => counterString)
+    .catch(err => console.error(err))
 };
 
 // Public API - Fix this function //////////////////////////////////////////////
 
-exports.getNextUniqueId = (callback) => {
-  readCounter((err, data) => {
-    if (err) {
-      callback(err)
-    } else {
-      writeCounter(data + 1, (err, data) => {
-        if (err) {
-          callback(err);
-        } else {
-          callback(null, data)
-        }
-      })
-    }
-  })
+exports.getNextUniqueId = () => {
+  // readCounter((err, data) => {
+  //   if (err) {
+  //     callback(err)
+  //   } else {
+  //     writeCounter(data + 1, (err, data) => {
+  //       if (err) {
+  //         callback(err);
+  //       } else {
+  //         callback(null, data)
+  //       }
+  //     })
+  //   }
+  // })
+  return readCounter()
+    .then(id => writeCounter(id + 1))
+    .catch(err => console.error(err))
 };
 
 
